@@ -1,7 +1,43 @@
 ---
 layout: post
-title:  "Faster Builds by Disabling Code Signing"
+title:  "Faster Builds with Code Signing Hacks"
 date:   2020-08-06 21:45:46 -0400
 categories: jekyll update
 ---
 
+## Introduction
+
+Code signing is one of the few operations that takes just as long to do for an incremental build as for a clean build. It also takes more time the larger an app grows in size. As a result, it can become a bottleneck for incremental builds. Here are some tricks to reduce that time.
+
+__Note__: these tricks are for debug builds only.
+__Note__: See how much time code signing takes during builds, i.e. how much time you can actually save, and decide if that amount matters to you.
+
+## When/how can we disable code signing?
+
+The hard part of disabling code signing is not doing it, but figuring when we can do it, and with what hacks to put on top. 
+
+#### Code signing for real devices
+
+Real devices (at least non-jailbroken ones) are strict about code signing. As a result, the best we can do for arm64 builds is add `--digest-algorithm=sha1` to "Other Code Signing Flags" in Xcode build settings. This will cause Xcode to use SHA-1 instead of SHA-256 for computing the hashes, which is faster. Isn't SHA-1 insecure, you say? In some situations, yes, but here it generally doesn't matter because this is just a debug build for ourselves.
+
+#### Code signing for the simulator
+
+This is where things get interesting. The good news is that the simulator doesn't require any code signing. The bad news is that the code signing step also includes entitlements injection. If you don't need entitlements for your simulator builds, you can stop here, but otherwise read on. To get entitlements on the device, the code signing step will insert a section into the binary called `__entitlements`. Some of Apple's APIs may then check for certain entitlements, and if they're missing, fail to work.
+
+How to inject entitlements like the code signing step does:
+
+- To start, look at the actual entitlements injected during code signing, to make sure your version will match it accurately. After compiling the binary for the simulator with normal code signing, run `otool -l <path to binary> | grep -A 5 __entitlements`. You should see something like this:
+```
+  sectname __entitlements
+   segname __TEXT
+      addr 0x0000000101d387d0
+      size 0x000000000000016b
+    offset 30640080
+     align 2^0 (1)
+```
+
+The `otool` command printed out various components of the binary, and we have grepped through them to find our target. Convert that size from hex to decimal, e.g. here `size 0x0...16b` would need `echo $((16#16b))`. Then, run `tail -c +<offset> <path to binary> | head -c <size, in decimal>`. You should see a property list of your entitlements. If you compare that to the entitlements file you supplied to Xcode, you should see how to go between the two (possibly just variable substitution with Xcode build environment variables). Now, in a post-build phase, run a script converting the entitlements file you'd normally pass to Xcode to what you actually see in the binary and output that to a file. Then, add `-Wl,-sectcreate,__TEXT,__entitlements,<the processed entitlements file path>` to "Other Linker Flags". This will instruct the linker to inject that entitlements file into a section called `__entitlements`, just like the code signing step would do. Lastly, in an .xcconfig file, set `CODE_SIGNING_ALLOWED = NO` to disable the code signing step.
+
+## Conclusion
+
+By following these steps, you can improve the incremental build time for all debug builds. Since this is an open problem, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded, but hopefully in the future they or some open-source project will make a faster version.
