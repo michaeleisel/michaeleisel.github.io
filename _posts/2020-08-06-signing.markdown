@@ -11,7 +11,7 @@ Code signing is one of the few operations that takes just as long to do for an i
 
 __Note__: these tricks are for debug builds only.
 
-__Note__: See how much time code signing takes during builds, i.e. how much time you can actually save, and decide if that amount matters to you.
+__Note__: see how much time code signing takes during builds, i.e. how much time you can actually save, and decide if that amount matters to you.
 
 ## Speeding up code signing
 
