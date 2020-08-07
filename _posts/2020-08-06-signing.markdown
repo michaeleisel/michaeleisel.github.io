@@ -44,6 +44,8 @@ The `otool` command printed out various components of the binary, and we have gr
 - Add `-Wl,-sectcreate,__TEXT,__entitlements,<the processed entitlements file path>` to "Other Linker Flags". This will instruct the linker to inject that entitlements file into a section called `__entitlements`, just like the code signing step would do.
 - In an .xcconfig file, set `CODE_SIGNING_ALLOWED = NO` to disable Xcode's code signing step.
 
+_Note_: it has recently come up that app groups may not work with this approach. I will be investigating soon.
+
 ## Conclusion
 
 By following these steps, you can improve the incremental build time for all debug builds. Since these are still hacks though, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded, but hopefully in the future they or some open-source project will make a faster version, reducing the need for these workarounds. And for a really deep dive into code signing, consider reading _MacOS and iOS Internals, Volume III_.
