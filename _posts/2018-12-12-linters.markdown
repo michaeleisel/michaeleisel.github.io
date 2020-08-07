@@ -1,0 +1,73 @@
+---
+layout: post
+title:  "Runtime Linters"
+date:   2018-12-12 21:45:46 -0400
+categories: jekyll update
+---
+
+## Introduction
+
+Although compile-time checking is the gold standard for preventing code mistakes, sometimes a check cannot feasibly be done at compile-time. To deal with this, we use runtime checks. assert is one common example, but there are many more. Apple provides the thread sanitizer to detect race conditions, the address sanitizer detects heap corruption, etc. These checkers are typically not for production users, but for internal users and developers. In this article, we’ll see how to add useful, strictly enforced checks for internal testing.
+
+## Enforcement
+
+A check should be rigorously enforced by crashing the app when it fails (or some other strict mechanism). This prevents the developer from ignoring it when it interrupts them running the app, causes UI tests to fail, and so on. All of the checkers mentioned in this post have the ability to crash the app (and run arbitrary code in general) if they detect an issue.
+
+## UIKit checkers
+
+UIKit has lots of gotchas to avoid. By running through the view hierarchy periodically, e.g. once each second, you can catch these errors. Here’s a [quick snippet](https://gist.github.com/michaeleisel/39f53b1f640f6533e4f0754b72ed862f) to go through the hierarchy for the currently displayed window.
+
+#### Checking that UIViews follow the theme of the app
+
+Often, an app will stick to a certain set of graphical attributes, i.e. a theme. This could include the text colors, UIView background colors, tint colors, fonts, and more. For example, maybe all UILabels are supposed to use either Arial Bold or Arial Regular. For all the UILabels in your hierarchy, you can make sure that their font.fontName property equals one of those two fonts.
+
+![](https://miro.medium.com/max/1400/1*eEEGtgrsi_g1VEbOMV0iKw.png)
+
+#### Checking that views are not under-constrained
+
+When a view is under-constrained, it will just silently be laid out in an unpredictable way. You can detect that by checking the hasAmbiguousLayout variable on each view in the hierarchy.
+
+#### Checking that no UIImages are being resized
+
+If a UIImage has to be resized to fit a UIImageView, it will hurt image quality and performance. To test if this is happening, use the UIImageView’s frame combined with its contentMode to figure out if the image view is being resized (or just require all UIImageViews to have the same size as their UIImages).
+
+{:refdef: style="text-align: center;"}
+![](https://miro.medium.com/max/560/1*11dlqt45nmqCgEVVCk8Jaw.png)
+{: refdef}
+
+#### Checking that views are aligned
+
+When a view’s boundaries don’t match up with pixel boundaries, the GPU has to do extra work. For example, if a view’s height is 20.5 pixels instead of 20 or 21 pixels, then the GPU will have to do extra blending work for the top/bottom pixel rows where the view only encroaches partway. As discussed, there’s already a checker for this, but it‘s not very enforceable. You can test if a view is misaligned by calling view.frame.isAligned with these extensions. You could also swizzle -[UIView setFrame:] and do the test there, rather than doing it periodically (assuming that no subclasses override that method).
+
+![](https://miro.medium.com/max/1400/1*-6BGOK6jY-y2y0bFQq4oiA.png)
+
+#### Checking that views are added to a UITableViewCell’s contentView and not the cell itself
+
+One should never add subviews directly to a UITableViewCell instance. Instead, they should be added to its contentView. You can check to see if this is true by looking at each UITableViewCell in your hierarchy and seeing that its subviews are all either special ones made by the OS (like a separator, which could be a subclass of \_UITableViewCellSeparatorView) or subviews of the contentView. The easiest way is to go through the view hierarchy and check this on each cell. You can also do this by swizzling addSubview and doing further runtime trickery.
+
+#### When to run UIKit checkers?
+
+These checkers could be run periodically, e.g. once per second, to catch all the many scrolls and other changes that could cause issues. Or, they can be called at certain key points, like right after any view controller’s view has finished laying out its subviews. There’s a tradeoff here between coverage and deterministic testing. For example, checkers that cause UI tests to fail should probably be more deterministic.
+
+## Checkers that intercept system error messages
+
+Sometimes, the only evidence that a best practice has been violated is from a call to NSLog from a system library. In this case, we’ll need to intercept the output to perform a check. Using [this helper gist](https://gist.github.com/michaeleisel/8eddd0082b4fd7f2bd118d97e79bf12e), we can “swizzle” the key functions that NSLog will use with our own, to check each log message before it’s written.
+
+#### Over-constrained layout
+
+When a view is over-constrained, the console will print “Make a symbolic breakpoint at UIViewAlertForUnsatisfiableConstraints”. You can search for UIViewAlertForUnsatisfiableConstraints in writeWillOccur in the helper gist to catch it.
+
+#### Malloc issues
+
+Some malloc issues (e.g. double free) are caught with the symbolic breakpoint at malloc_error_break, so you can search for that string in the helper gist.
+
+## Other
+
+#### App Not Responding (ANR) detection
+
+If the main thread is blocked for some large amount of time, e.g. 5 seconds, you may want to just crash the app rather than leave the user waiting out a potentially infinite delay. To detect when this occurs, you can attempt to run a block once every second on the main thread, and then on a background thread check periodically to see if the time the last block was run was less than 5 seconds ago. If the main thread is blocked, then the block that’s enqueued will just sit there and not run, and once 5 seconds pass, a crash will occurs. [This class](https://gist.github.com/michaeleisel/77b8efc9bedab1444dbb71a5915dbd15) allows you to do that.
+
+## Conclusion
+
+Hopefully some of these checks are useful to you and will provide inspiration for more checks of your own. Feel free to leave ideas for other checkers in the comments!
+

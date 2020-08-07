@@ -1,0 +1,101 @@
+---
+layout: post
+title:  "Quick Trick to Make Your App Snappier"
+date:   2019-02-12 21:45:46 -0400
+categories: jekyll update
+---
+
+#### Reduce lag in view controller transitions by 75ms
+
+## Introduction
+
+Whenever a new view controller is presented, there are delays for the user, both in waiting for views to get set up on the main thread, as well as for new data to get fetched from the server. With a little trick, you can reduce those delays by 75ms. It may not seem huge, but 75ms can have a [big impact](https://blog.gigaspaces.com/amazon-found-every-100ms-of-latency-cost-them-1-in-sales/) on user engagement. This post is inspired by [instant.page](instant.page), which does roughly the same thing but for websites.
+
+## Introduction
+
+It’s simple: when you have a UIButton that triggers a transition to a new view controller, you set the new VC up on touchDown, not touchUpInside. Roughly speaking, you go from:
+
+
+{% highlight swift %}
+func didTouchUp() {
+  let vc = DestViewController()
+  presentVC(vc)
+}
+{% endhighlight %}
+
+to:
+
+
+{% highlight swift %}
+func didTouchDown() {
+  self.vc = DestViewController()
+}
+
+// about 75ms elapses here...
+func didTouchUp() {
+  presentVC(self.vc)
+}
+{% endhighlight %}
+
+75ms is the average delay I found between the two events (the range was about 50–100ms).
+
+## In Depth
+
+Here's the full code:
+
+{% highlight swift %}
+
+import UIKit
+
+class MyViewController: UIViewController {
+    @IBOutlet weak var button: UIButton!
+    var vc: UIViewController? = nil
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        button.addTarget(self, action: #selector(down), for: .touchDown)
+
+        // If user generated touchDown and then didn't generate touchUpInside, we would have
+        // set up a view controller that won't even be presented, which can cause problems,
+        // e.g. with metrics.
+        // Instead, run the .up() method for *every* possible outcome after touchDown:
+        // touchUpInside, touchUpOutside, and touchCancel
+        button.addTarget(self, action: #selector(up), for: .touchUpInside)
+        button.addTarget(self, action: #selector(up), for: .touchUpOutside)
+        button.addTarget(self, action: #selector(up), for: .touchCancel)
+
+        // Don't let the user do anything else while they're pressing the button
+        button.isExclusiveTouch = true
+    }
+
+    @objc private func up() {
+        if let vc = vc {
+            present(vc, animated: true, completion: nil)
+        } else {
+            // This else block would only happen in the (probably) impossible case when .async
+            // is still enqueued from .down()
+        }
+        vc = nil
+    }
+
+    @objc private func down() {
+        // This .async call is necessary if the button has an animation that you want to run
+        // while the main thread is blocked to set up the new VC.
+        // You might think that blocking the main thread, even after the animation has just
+        // begun, will still block the animation. But actually, once they've been started,
+        // animations keep going even when the main thread is blocked
+        DispatchQueue.main.async {
+            let vc = UIViewController()
+            let _ = vc.view // Calling .view triggers viewDidLoad etc., so that more setup can occur
+            self.vc = vc
+        }
+    }
+}
+{% endhighlight %}
+
+This code ensures that once the user presses down on the button, the new view controller will eventually be presented no matter what, which can reduce bugs. Your requirements may vary.
+
+## Conclusion
+
+Although the actual work being done remains the same, the user will perceive it as occurring more quickly because it gets done further in advance. This will make your app feel more responsive!

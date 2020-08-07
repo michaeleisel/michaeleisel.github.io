@@ -1,0 +1,38 @@
+---
+layout: post
+title:  "Improving App Performance with Order Files"
+date:   2019-01-15 21:45:46 -0400
+categories: jekyll update
+---
+
+## Introduction
+
+Binaries for iOS apps can be tens or even hundreds of megabytes. That much data takes time to load into memory, and is a hidden performance cost. Order files speed up the process of loading your app’s binary into memory, helping overall performance. To understand them, we must first look at paging.
+
+## Paging
+
+The OS loads data into memory in pages, i.e. fixed-size blocks (16 KB each for iPhones). Whenever a function is called or a piece of data is accessed from the binary, the OS will load the page(s) that contain it. Even if the function takes just a small fraction of a page, the OS will still load the whole page. So if there’s fragmentation, i.e. functions that are called together reside within many different pages, then there will be overhead to load the pages keep them in memory. Order files can reduce that fragmentation.
+
+## What’s an order file?
+
+An order file is a file given to the linker specifying the order that it should put all the functions and data within the binary. If you can group together functions that are typically called together (e.g., all the functions that get called on startup), then you can improve your app’s performance.
+
+__Note__: Messing with order files should only be done once you’ve picked all the low-hanging performance fruit. This is a more complicated optimization, and there’s no guarantee how much speedup you’ll get.
+
+## Determining what the order should be
+
+#### Overview
+
+A good way of ordering it is by the first time each function is called. So it will probably start with main, then -[AppDelegate applicationDidFinishLaunching:…], etc. To do this, we can use the coverage sanitizer, a compiler feature where every single function that gets compiled will call our global handler each time it is run. Then, the first time that our handler is called with any specific function, we’ll record it in a list, and later write that list out to a file.
+
+#### Compiling with the coverage sanitizer
+
+In your Xcode build settings, add `-fsanitize-coverage=func,trace-pc-guard` under “Other C flags”. If you are using Swift, also add `-sanitize-coverage=func` under “Other Swift flags” and turn on the address sanitizer (which can be done in your scheme settings). Make sure to include these flags for everything you’ll be linking into the main binary, such as Cocoapods.
+
+#### Recording at runtime
+
+Insert [this code](https://gist.github.com/michaeleisel/111fed9bf8dc46d2c08a0a30b940171e) and [this header](https://gist.github.com/michaeleisel/c1739427d8990752181110b508fd3cad) into your app. Then, use the app as a user might and go through each feature, starting with the most popular one and ending with the least popular one. At the end, call `CLRCollectCalls()` and it will return a list of the functions called. Write this list out to a file, with each call on its own line, and change the “Order file” build setting to be the path to this file. Then, build the project again and verify that it has been reordered by comparing the list with `nm -j -p <path to binary>`. The two should match.
+
+#### Conclusion
+
+Order files can reduce both memory consumption as well as CPU time. It may not be necessary or helpful for your app at the moment, but it is another tool that you can turn to when needed. This article only covered how to order functions in your binary, but if people request it, I can also discuss how to order data (e.g. constant strings) in your binary.

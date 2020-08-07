@@ -1,0 +1,74 @@
+---
+layout: post
+title:  "Measuring your iOS app’s true startup time in production"
+date:   2018-11-19 21:45:46 -0400
+categories: jekyll update
+---
+
+## Update
+With iOS 13, Apple has released `histogrammedTimeToFirstDraw`, which has a timer that “starts when the user taps the app icon and ends when the system draws the first screen that’s not the launch screen”. Try seeing if that meets your needs before going through this article.
+
+## Introduction
+
+Before an app even runs `main` and `+applicationDidFinishLaunching`, a considerable amount of work is done, including setting up dylibs for use, running `+load` methods, and more. This can take 500ms or more. Blog posts like [this one](https://techblog.izotope.com/2018/03/08/improving-your-ios-apps-launch-time/) show you how to measure it with the debugger, using `DYLD_PRINT_STATISTICS`, but it’s hard to find any help for measurement in the wild.
+
+## How To Do It
+
+You can get the process start time with the following code:
+
+{% highlight c %}
+#import <sys/sysctl.h>
+
+static CFTimeInterval processStartTime() {
+    size_t len = 4;
+    int mib[len];
+    struct kinfo_proc kp;
+
+    sysctlnametomib("kern.proc.pid", mib, &len);
+    mib[3] = getpid();
+    len = sizeof(kp);
+    sysctl(mib, 4, &kp, &len, NULL, 0);
+
+    struct timeval startTime = kp.kp_proc.p_un.__p_starttime;
+    return startTime.tv_sec + startTime.tv_usec / 1e6;
+}
+
+static CFTimeInterval sPreMainStartTimeRelative;
+
+int main(int argc, char * argv[], char **envp) {
+    CFTimeInterval absoluteTimeToRelativeTime =  CACurrentMediaTime() - [NSDate date].timeIntervalSince1970;
+    sPreMainStartTimeRelative = processStartTime() + absoluteTimeToRelativeTime;
+    // ...
+}
+
+// Call this function to get your final measurement
+CFTimeInterval timeFromStartToNow() {
+    return CACurrentMediaTime() - sPreMainStartTimeRelative;
+}
+{% endhighlight %}
+
+#### Caveat
+
+The process start time that we get from `processStartTime` is given in seconds since 1970. Unfortunately, this is not so great for timing because it can be changed, e.g. if the phone synchronizes its time with a server in between when the process starts and when we run `[NSDate date].timeIntervalSince1970` in `main()`. This would be a very rare case, but it should be kept in mind (you may want to remove negative and ridiculously large values from your results).
+
+#### Main thread CPU Time
+
+You can also get the amount of CPU time the main thread has spent by running this code on the main thread:
+
+{% highlight c %}
+struct timespec tp;
+clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tp);
+CFTimeInterval time = tp.tv_sec + tp.tv_nsec / 1e9;
+{% endhighlight %}
+
+This number represents the amount of time the main thread has spent doing work, but does not include the amount of time it was waiting, e.g. due to being preempted by another process or thread. In practice, it will be about the same as the time taken from the method in the gist (I measured it being consistently 7ms less). This number may be preferable if you don’t want to time anything that’s out of your control.
+
+## Conclusion
+
+The pre-main() time provides an important piece of information in understanding your overall launch time. By measuring from the very start of the process to when the app is actually interactive, you can gain insight into the actual experience for your users.
+
+## Links
+
+[Optimizing App Startup Time (WWDC)](https://developer.apple.com/videos/play/wwdc2016/406/)
+
+[App Startup Time: Past, Present, and Future (WWDC)](https://developer.apple.com/videos/play/wwdc2016/406/)

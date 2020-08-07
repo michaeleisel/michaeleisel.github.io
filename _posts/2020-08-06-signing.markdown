@@ -1,0 +1,7 @@
+---
+layout: post
+title:  "Faster Builds by Disabling Code Signing"
+date:   2020-08-06 21:45:46 -0400
+categories: jekyll update
+---
+
