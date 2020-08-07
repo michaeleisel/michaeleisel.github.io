@@ -46,6 +46,6 @@ The `otool` command printed out various components of the binary, and we have gr
 
 ## Conclusion
 
-By following these steps, you can improve the incremental build time for all debug builds. Since these are still hacks though, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded,ebut hopefully in the future they or some open-source project will make a faster version, reducing the need for these workarounds. And for a really deep dive into code signing, consider reading _MacOS and iOS Internals, Volume III_.
+By following these steps, you can improve the incremental build time for all debug builds. Since these are still hacks though, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded, but hopefully in the future they or some open-source project will make a faster version, reducing the need for these workarounds. And for a really deep dive into code signing, consider reading _MacOS and iOS Internals, Volume III_.
 
 _Special thanks to Milen Dzhumerov for his information on code signing_
