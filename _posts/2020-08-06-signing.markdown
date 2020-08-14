@@ -23,7 +23,7 @@ Changing the hash algorithm that code signing uses is the easiest, lowest-risk c
 
 Now that we've made hashing faster, we're going to reduce the amount of stuff we have to hash in the first place. Resource rules are rules, given in a plist, telling codesign what to sign and what not to. Since so much time of code signing is taken up by hashing files in the bundle besides the binary, and since Apple APIs seem only to care if the binary has been hashed, we can use resource rules to have Apple exclude everything but the binary. Here's the plist:
 
-{% highlight plist %}
+{% highlight xml %}
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
