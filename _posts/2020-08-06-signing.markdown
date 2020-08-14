@@ -7,7 +7,7 @@ categories: jekyll update
 
 ## Introduction
 
-Code signing is one of the few operations that takes just as long to do for an incremental build as for a clean build. It also takes more time the larger an app grows in size. As a result, it can become a bottleneck for incremental builds. Here are some tricks to reduce that time.
+Code signing is one of the few operations that takes just as long to do for an incremental build as for a clean build. It also takes more time the larger an app grows in size. As a result, it can become a bottleneck for incremental builds. Here are some tricks to reduce that time. They're all technically undocumented and may break in the future, but they're also used by large companies with no apparent downsides.
 
 __Note__: these tricks are for debug builds only.
 
@@ -15,39 +15,44 @@ __Note__: see how much time code signing takes during builds, i.e. how much time
 
 ## Speeding up code signing
 
-#### On real devices
+#### Faster hashing
 
-Real devices (at least non-jailbroken ones) are strict about code signing. As a result, the best we can do for real device builds is add `--digest-algorithm=sha1` to "Other Code Signing Flags" in the Xcode build settings. This will cause Xcode to use SHA-1 instead of SHA-256 for computing the hashes, which is faster. Isn't SHA-1 insecure, you say? In some situations, yes, but here you probably wouldn't care since it's a personal debug build.
+Changing the hash algorithm that code signing uses is the easiest, lowest-risk change of these. We can have it use SHA-1, which is faster than the default SHA-256, by adding `--digest-algorithm=sha1` to "Other Code Signing Flags" in the Xcode build settings. Isn't SHA-1 insecure, you say? In some situations, yes, but here you probably wouldn't care since it's a personal debug build.
 
-#### On the simulator
+#### Resource rules
 
-This is where things get interesting. The good news is that the simulator doesn't require any code signing, so code signing can be disabled altogether. The bad news is that the code signing step also does entitlements injection. If you don't need entitlements for your simulator builds, you can stop here, but otherwise read on. To get entitlements on the device, the code signing step will insert a section into the binary called `__entitlements`. Some of Apple's APIs may then check for certain entitlements, and if they're missing, fail to work.
+Now that we've made hashing faster, we're going to reduce the amount of stuff we have to hash in the first place. Resource rules are rules, given in a plist, telling codesign what to sign and what not to. Since so much time of code signing is taken up by hashing files in the bundle besides the binary, and since Apple APIs seem only to care if the binary has been hashed, we can use resource rules to have Apple exclude everything but the binary. Here's the plist:
+
+{% highlight plist %}
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+       <key>rules</key>
+       <dict>
+               <key>.*</key>
+               <false/>
+       </dict>
+</dict>
+</plist>
+{% endhighlight %}
+
+Put that somewhere in your project and add `--resource-rules=<path to the plist>` to "Other Code Signing Flags" in the Xcode build settings. Although this flag was deprecated in iOS 7, it still seems to work on both Xcode 11 and 12. There's also an alternative way to do this. It's less recommended because it's more work, but the one benefit is that it doesn't require this old flag. For this, create an empty directory `MyApp.app` somewhere temporary move the binary, `MyApp`, to it. I.e., you have your normal app bundle now but with everything besides the binary removed. Now, codesign _that_ bundle and then move the binary afterwards back to where it was. This will have only signed the binary and no other resources, since the bundle consisted of nothing but the binary.
+
+#### Optional hack for the simulator
+
+The above changes will reduce code signing time but still preserve functionality. However, for the simulator, there's another shortcut. The only downside is that it will break app groups and possibly other entitlements (though most entitlements, such as keychain and sign in with Apple, will still work). If you do this change, undo the previous changes for simulator signing, as they won't offer any benefits on top of this. Some background: the code signing process consists of both computing hashes and writing their results somewhere, as well as adding the entitlements plist to the binary. Since most APIs will only check if their entitlement is in the entitlements plist in the binary (if they check at all), and since the simulator otherwise doesn't care if the binary is signed, we can just inject the plist into the binary ourselves.
 
 How to inject entitlements like the code signing step does:
 
-- To start, look at the actual entitlements injected during code signing, to make sure your version will match it accurately. After compiling the binary for the simulator with normal code signing, run `otool -l <path to binary> | grep -A 5 __entitlements`. You should see something like this:
-```
-  sectname __entitlements
-   segname __TEXT
-      addr 0x0000000101d387d0
-      size 0x000000000000016b
-    offset 30640080
-     align 2^0 (1)
-```
-
-The `otool` command printed out various components of the binary, and we have grepped through them to find our target.
-
-- Convert the size from hex to decimal, e.g. here `size 0x0...16b` would need `echo $((16#16b))`.
-- Run `tail -c +<offset> <path to binary> | head -c <size, in decimal>`. You should see a property list of your entitlements.
-- If you compare the entitlements in the binary to the entitlements file you supplied to Xcode, you should see how to go between the two (possibly just variable substitution with Xcode build environment variables)
-- In a post-build phase, run a script converting the entitlements file you'd normally pass to Xcode to what you actually see in the binary.
+- Use `xcrun segedit <path to simulator binary> -extract __TEXT __entitlements -` to see the actual entitlements plist that codesign puts in the binary.
+- Compare those entitlements to the entitlements file you supplied to Xcode, and you should see how to go between the two (possibly just variable substitution with Xcode build environment variables).
+- In a post-build phase, run a script doing that conversion.
 - Add `-Wl,-sectcreate,__TEXT,__entitlements,<the processed entitlements file path>` to "Other Linker Flags". This will instruct the linker to inject that entitlements file into a section called `__entitlements`, just like the code signing step would do.
 - In an .xcconfig file, set `CODE_SIGNING_ALLOWED = NO` to disable Xcode's code signing step.
 
-_Note_: it has recently come up that app groups may not work with this approach. I will be investigating soon.
-
 ## Conclusion
 
-By following these steps, you can improve the incremental build time for all debug builds. Since these are still hacks though, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded, but hopefully in the future they or some open-source project will make a faster version, reducing the need for these workarounds. And for a really deep dive into code signing, consider reading _MacOS and iOS Internals, Volume III_.
+By following these steps, you can improve the incremental build time for all debug builds. Since these are still hacks though, feel free to let me know on Twitter if anything didn't work. Note that Apple's code signing tools are woefully under-optimized, e.g. because they're single-threaded, but hopefully in the future they or some open-source project will make a faster version. For a really deep dive into code signing, consider reading _MacOS and iOS Internals, Volume III_.
 
-_Special thanks to Milen Dzhumerov for his information on code signing_
+_Special thanks to Milen Dzhumerov and Keith Smiley for their help with this post._
