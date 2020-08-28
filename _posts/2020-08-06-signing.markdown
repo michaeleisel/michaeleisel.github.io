@@ -3,6 +3,8 @@ layout: post
 title:  "Faster Builds with Code Signing Hacks"
 date:   2020-08-06 21:45:46 -0400
 categories: jekyll update
+redirect_from:
+  - https://eisel.me/jekyll/update/2020/08/06/signing.html
 ---
 
 ## Introduction
