@@ -3,7 +3,6 @@ layout: post
 title:  "Faster Builds with Code Signing Hacks"
 date:   2020-08-06 21:45:46 -0400
 categories: jekyll update
-# Note that this uses 7, not 6
 redirect_from: /jekyll/update/2020/08/07/signing.html
 ---
 
