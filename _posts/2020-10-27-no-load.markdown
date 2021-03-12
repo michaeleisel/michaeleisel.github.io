@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "SDK Developers: Don't use +load (and its equivalents)"
+date:   2020-10-27 21:45:46 -0400
+categories: jekyll update
+---
+
+#### __Before you read this article__: Apple says that it will reduce the download size of all apps by 50% by “packaging” them differently. They are probably fixing the problems that this article provides workarounds for, making this article irrelevant. However, I will leave the article up for general interest.
+
+App download size is important. The larger your app’s download size, the fewer users will download it. Plus, if it goes past 150 MB, then the App Store won’t allow users to download it over WWAN.
+
+## What determines an app’s download size?
+
+I'm not the first person to say it, but it bears repeating. When I look a

@@ -5,9 +5,6 @@ date:   2018-11-19 21:45:46 -0400
 categories: jekyll update
 ---
 
-## Update
-With iOS 13, Apple has released `histogrammedTimeToFirstDraw`, which has a timer that “starts when the user taps the app icon and ends when the system draws the first screen that’s not the launch screen”. Try seeing if that meets your needs before going through this article.
-
 ## Introduction
 
 Before an app even runs `main` and `+applicationDidFinishLaunching`, a considerable amount of work is done, including setting up dylibs for use, running `+load` methods, and more. This can take 500ms or more. Blog posts like [this one](https://techblog.izotope.com/2018/03/08/improving-your-ios-apps-launch-time/) show you how to measure it with the debugger, using `DYLD_PRINT_STATISTICS`, but it’s hard to find any help for measurement in the wild.
