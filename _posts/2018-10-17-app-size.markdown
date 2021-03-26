@@ -5,7 +5,11 @@ date:   2018-10-17 21:45:46 -0400
 categories: jekyll update
 ---
 
-#### __Before you read this article__: Apple says that it will reduce the download size of all apps by 50% by “packaging” them differently. They are probably fixing the problems that this article provides workarounds for, making this article irrelevant. However, I will leave the article up for general interest.
+### __Note: this trick doesn't apply to iOS 13+__
+
+For iOS 13 and beyond, Apple no longer encrypts so much of the binary prior to compressing. This article is left up for historical purposes and those who want to use it for iOS 12 and before.
+
+## Introduction
 
 App download size is important. The larger your app’s download size, the fewer users will download it. Plus, if it goes past 150 MB, then the App Store won’t allow users to download it over WWAN.
 
