@@ -1,0 +1,10 @@
+---
+layout: post
+title:  "Reducing the app size cost of localization strings"
+date:   2021-03-25 21:45:46 -0400
+categories: jekyll update
+---
+
+## Reducing the app size cost of localization strings
+
+
