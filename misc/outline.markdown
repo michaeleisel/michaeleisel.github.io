@@ -1,0 +1,61 @@
+## Introduction
+The app download size is important to keep small to have a fast onboarding experience for the user, and to reduce the size of the app on disk. By using this trick for an app with a lot of localization .strings files, it can be reduced by a decent amount.
+
+## Expected Gain
+
+This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 60%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. If the app is of a small or medium size, the localization strings may only be 100kb or less, meaning the maximum gain here probably isn't worth it. For really large apps however, this trick can the download size by 1 megabyte or more.
+
+## Explanation
+
+Suppose an app has Localization.strings files for English and Spanish, each with values for keys `key1` and `key2`. Here's the English one:
+```
+"key1" = "some thing";
+"key2" = "other thing";
+```
+
+and the Spanish one:
+
+```
+"key1" = "alguna cosa";
+"key2" = "otra cosa";
+```
+
+There's some repetition here: `key1` and `key2` have to be included for each language. However, they could just be stored once, in a separate file. Then, each localization file only needs to store its values, _as long as the order of each language's values matches the keys_. So here, it could repackaged in JSON as:
+
+keys.json
+```
+["key1", "key2"]
+```
+
+english.json
+```
+["some thing", "other thing"]
+```
+
+spanish.json
+```
+["alguna cosa", "otra cosa"]
+```
+
+Now the key-value pairs for any language can be reconstructed by zipping the global list of keys with that language's values. Note that the list of keys must include any key that's needed for at least one language. For languages that don't have a value for a key needed by another language, there needs to be a placeholder. E.g., if Spanish didn't have a value for `key2`, its JSON would be `["alguna cosa", null]`
+
+## A New Strings Pipeline
+
+This new structure, unfortunately, doesn't work with Apple's existing `NSLocalizedString`/`localizedString(forKey key:, value:, table tableName:)` setup. Instead, it needs a new version of these functions. On the plus side, by creating a new pipeline, it makes further customizations easier in the future. Make sure Apple knows which localizations are supported, so it can display it in the App Store, by setting the [CFBundleLocalizations](https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundlelocalizations) key. Also, InfoPlist.strings must be left alone, as Apple expects it to be as it is.
+
+Here's a [git repo] with an example of this pipeline.
+
+### Pluralization and .stringsdict
+Including pluralized strings in a new pipeline is trickier because of the complexities inherent to it. In my experience, the strings that require pluralization are just a fraction of the overall app size, meaning it doesn't matter much, but if that's not the case for you, feel free to mention so on this [this issue].
+
+## Increasing Compressibility
+
+Reducing the app download size isn't just about reducing the amount of data in the app, it's also about making it more compressible. Compression algorithms generally make use of repetition in data to make things smaller (e.g., a file of 1,000 "A"s in a row could be encoded as A:1000). Fortunately, there's often a lot of repetition between localized strings. If the app has a premium feature, there might be strings for "Premium Status", "Download Premium", and "Cancel Premium". One way to order strings to maximize compressibility is to sort them by their values in one of the languages for which there are values.
+
+## Post-install compression
+
+So far, the article has focused on reducing the app's download size. However, the size of that the app's data after installation is also important. Normally, .strings files (or their .json counterparts here) would just sit there uncompressed after installation. This takes up more space on disk than if they were compressed, and also might increase the app size that Apple reports in the App Store. To reduce disk space usage, the files can be zipped individually in the bundle. Then, each time the user opens up the app, lazily decompress the files for the languages the user actually needs and cache those somewhere in an uncompressed format. There are other compressions options too, such as the speedy [Zstandard](https://engineering.fb.com/2018/12/19/core-data/zstandard/), which is what Instagram appears to use for their .strings files.
+
+## Conclusion
+
+This trick is one example of a larger theme: find a way to repackage some type of file to be smaller, in this case localization strings, then replace apple's pipeline for accessing it with your own. It can be extended to other types as well. For images, for instance, they could all be delivered in a small modern image format like AVIF (with just a slight loss of quality), then have .png files downloaded later.
