@@ -1,19 +1,9 @@
----
-layout: post
-title:  "Reducing the app size cost of localization strings"
-date:   2021-03-25 21:45:46 -0400
-categories: jekyll update
----
-
-# Reducing the app size cost of localization strings
-
 ## Introduction
-
 The app download size is important to keep small to have a fast onboarding experience for the user, and to reduce the size of the app on disk. By using this trick for an app with a lot of localization .strings files, it can be reduced by a decent amount.
 
 ## Expected Gain
 
-This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 50%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. If the app is of a small or medium size, the localization strings may only be 100kb or less, meaning the maximum gain here probably isn't worth it. For really large apps however, this trick can the download size by 1 megabyte or more.
+This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 60%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. If the app is of a small or medium size, the localization strings may only be 100kb or less, meaning the maximum gain here probably isn't worth it. For really large apps however, this trick can the download size by 1 megabyte or more.
 
 ## Explanation
 
@@ -64,7 +54,7 @@ Reducing the app download size isn't just about reducing the amount of data in t
 
 ## Post-install compression
 
-So far, the article has focused on reducing the app's download size. However, the size of that the app's data after installation is also important. Normally, .strings files (or their .json counterparts here) would just sit there uncompressed after installation. This takes up more space on disk than if they were compressed, and also might increase the app size that Apple reports in the App Store. To reduce disk space usage, the files can be zipped individually in the bundle. Then, each time the user opens up the app, lazily decompress the files for the languages the user actually needs and cache those somewhere in an uncompressed format. There are other compressions options too besides zip, such as the speedy [Zstandard](https://engineering.fb.com/2018/12/19/core-data/zstandard/), which is what Instagram appears to use for their .strings files.
+So far, the article has focused on reducing the app's download size. However, the size of that the app's data after installation is also important. Normally, .strings files (or their .json counterparts here) would just sit there uncompressed after installation. This takes up more space on disk than if they were compressed, and also might increase the app size that Apple reports in the App Store. To reduce disk space usage, the files can be zipped individually in the bundle. Then, each time the user opens up the app, lazily decompress the files for the languages the user actually needs and cache those somewhere in an uncompressed format. There are other compressions options too, such as the speedy [Zstandard](https://engineering.fb.com/2018/12/19/core-data/zstandard/), which is what Instagram appears to use for their .strings files.
 
 ## Conclusion
 
