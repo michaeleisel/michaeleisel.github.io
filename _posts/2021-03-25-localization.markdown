@@ -61,10 +61,6 @@ Here's a [git repo](https://github.com/michaeleisel/MiniStrings) with an example
 
 Including pluralized strings in a new pipeline is trickier because of the complexities inherent to it. In my experience, the strings that require pluralization are just a fraction of the overall strings, meaning it doesn't matter much. If you do need support though, feel free to file an issue about it.
 
-## Increasing Compressibility
-
-Reducing the app download size isn't just about reducing the amount of data in the app, it's also about making it more compressible. Compression algorithms generally make use of repetition in data to make things smaller (e.g., a file of 1,000 "A"s in a row could be encoded as A:1000). Fortunately, there's often a lot of repetition between localized strings, so consider reordering the keys for better compression.
-
 ## Post-install compression
 
 So far, the article has focused on reducing the app's download size. However, the size of that the app's data after installation is also important. Normally, .strings files (or their .json counterparts here) would just sit there uncompressed after installation. This takes up more space on disk than if they were compressed, and also(?) increases the app size that Apple reports in the App Store. To reduce disk space usage, the files can be zipped individually in the bundle. Then, each time the user opens up the app, lazily decompress the file for the language the user actually needs and cache it somewhere in an uncompressed format. There are other compressions options too besides zip, such as the speedy [Zstandard](https://engineering.fb.com/2018/12/19/core-data/zstandard/), which is what Instagram appears to use for their .strings files.
