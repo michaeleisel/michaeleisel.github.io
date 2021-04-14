@@ -5,17 +5,13 @@ date:   2021-03-25 21:45:46 -0400
 categories: jekyll update
 ---
 
-# Reducing the App Size Cost of Localization Strings
-
 ## Introduction
 
 The app download size is important to keep small to have a fast onboarding experience for the user, and to reduce the size of the app on disk. By using this trick for an app with a lot of localized strings, it can be reduced by a decent amount.
 
 ## Expected Gain
 
-###  Are there enough strings for this to matter?
-
-This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 50%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. Typically, it's a good optimization specifically for very large apps, where the strings can take up several megabytes.
+This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 50%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. Typically, it's good for very large apps, where the strings can take up several megabytes.
 
 ## Explanation
 
