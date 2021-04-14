@@ -53,7 +53,7 @@ This new structure, unfortunately, doesn't work with Apple's existing `NSLocaliz
 
 Here's a [git repo](https://github.com/michaeleisel/MiniStrings) with an example of this pipeline.
 
-### Pluralization and .stringsdict
+## Pluralization and .stringsdict
 
 Including pluralized strings in a new pipeline is trickier because of the complexities inherent to it. In my experience, the strings that require pluralization are just a fraction of the overall strings, meaning it doesn't matter much. If you do need support though, feel free to file an issue about it.
 
