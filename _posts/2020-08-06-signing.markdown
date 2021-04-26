@@ -14,6 +14,8 @@ __Note__: these tricks are for debug builds only.
 
 __Note__: see how much time code signing takes during builds, i.e. how much time you can actually save, and decide if that amount matters to you.
 
+![Xcode signing in build log]({{ site.url }}/assets/signing.png)
+
 ## Speeding up code signing
 
 #### Faster hashing
