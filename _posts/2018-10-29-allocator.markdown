@@ -35,7 +35,7 @@ All allocators require at least a bit of memory overhead, if not a lot, due to f
 
 There are many already being used on iOS. Here, we set a symbolic breakpoint on `malloc`, which then shows us all the different functions named `malloc` in libraries used by a simple app:
 
-![mallocs](https://miro.medium.com/max/1400/1*kkW5gMGKhYuDwjjZNU6Ffg.png)
+![mallocs]({{ site.url }}/assets/mallocs.png)
 
 We can see that, for example, the Javascript engine has at least two and CFNetwork has at least one. There are more than that that are just not caught by this breakpoint.
 
@@ -63,7 +63,7 @@ This is the original way that I recommended to make the allocator work. However,
 
 #### The zone way
 
-![mallocs](https://miro.medium.com/max/1372/1*251KMD1Fc3T9PXzSJ39a1w.png)
+![mallocs]({{ site.url }}/assets/malloc_options.png)
 
 Since everything goes through malloc, which then calls malloc_zone_malloc, we just have to override one of the two. The most successful, widely-used, and stable library that I’ve seen do this is jemalloc. It works by overriding some of the [internals](https://github.com/jemalloc/jemalloc/blob/dev/src/zone.c) of malloc_zone_malloc, replacing function pointers with jemalloc versions. While it’s meant to work only for OSX, it also works pretty well on iOS, which makes sense because the internals between iOS and OSX are largely the same. Note that building for iOS takes a bit of work with `./configure`, for example I used, rougly, `./autogen.sh && ./configure — — with-lg-page=14 — — host=#{triple} — — target=#{triple}` where #{triple} would be something like aarch64-apple-ios.
 

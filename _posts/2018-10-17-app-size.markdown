@@ -17,7 +17,7 @@ App download size is important. The larger your app’s download size, the fewer
 
 Let’s look at the Telegram app (thinned for the iPhone X) and see how much each file type contributes:
 
-![app](https://miro.medium.com/max/1400/1*Qelky2YubQI19xthkI7vlA.png)
+![app]({{ site.url }}/assets/app_size_breakdown.png)
 
 As you can see, it’s dominated by binaries (the main binary, frameworks, and extension binaries). Binaries usually make up 60%+ of an app’s download size.
 
@@ -51,7 +51,7 @@ Our linker flags won’t work with bitcode, so we’ll have to turn bitcode off.
 
 Get the path to your executable from the build log:
 
-![](https://miro.medium.com/max/1400/1*RIm9VfalrZoj5an7fHXFhw.png)
+![app]({{ site.url }}/assets/app_size_build_log.png)
 
 Then, run `xcrun size -x -l -m <path to your app>` and you should get:
 
@@ -73,7 +73,7 @@ We’ll call our new segment \_\_MY_TEXT. For each section in the \_\_TEXT segme
 You can get a quick set of flags that will probably do the job with this gist. Or, you can be more thorough and run this script for your binary, which will give you flags for all the sections.
 To add these flags, go to the Xcode build settings for your target and add them under “Other Linker Flags”:
 
-![](https://miro.medium.com/max/1400/1*06zJTs2ygp73nV7dEQLebg.png)
+![app]({{ site.url }}/assets/linker_flags.png)
 
 - Verify
 

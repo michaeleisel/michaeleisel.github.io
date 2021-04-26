@@ -21,7 +21,7 @@ UIKit has lots of gotchas to avoid. By running through the view hierarchy period
 
 Often, an app will stick to a certain set of graphical attributes, i.e. a theme. This could include the text colors, UIView background colors, tint colors, fonts, and more. For example, maybe all UILabels are supposed to use either Arial Bold or Arial Regular. For all the UILabels in your hierarchy, you can make sure that their font.fontName property equals one of those two fonts.
 
-![](https://miro.medium.com/max/1400/1*eEEGtgrsi_g1VEbOMV0iKw.png)
+![]({{ site.url }}/assets/text_check.png)
 
 #### Checking that views are not under-constrained
 
@@ -32,14 +32,14 @@ When a view is under-constrained, it will just silently be laid out in an unpred
 If a UIImage has to be resized to fit a UIImageView, it will hurt image quality and performance. To test if this is happening, use the UIImageView’s frame combined with its contentMode to figure out if the image view is being resized (or just require all UIImageViews to have the same size as their UIImages).
 
 {:refdef: style="text-align: center;"}
-![](https://miro.medium.com/max/560/1*11dlqt45nmqCgEVVCk8Jaw.png)
+![]({{ site.url }}/assets/bad_aspect_ratio.png)
 {: refdef}
 
 #### Checking that views are aligned
 
 When a view’s boundaries don’t match up with pixel boundaries, the GPU has to do extra work. For example, if a view’s height is 20.5 pixels instead of 20 or 21 pixels, then the GPU will have to do extra blending work for the top/bottom pixel rows where the view only encroaches partway. As discussed, there’s already a checker for this, but it‘s not very enforceable. You can test if a view is misaligned by calling view.frame.isAligned with these extensions. You could also swizzle -[UIView setFrame:] and do the test there, rather than doing it periodically (assuming that no subclasses override that method).
 
-![](https://miro.medium.com/max/1400/1*-6BGOK6jY-y2y0bFQq4oiA.png)
+![]({{ site.url }}/assets/misaligned_view.png)
 
 #### Checking that views are added to a UITableViewCell’s contentView and not the cell itself
 
