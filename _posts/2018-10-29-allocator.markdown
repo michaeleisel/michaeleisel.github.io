@@ -69,6 +69,8 @@ Since everything goes through malloc, which then calls malloc_zone_malloc, we ju
 
 *Warning: although there are no obvious issues with it, it’s not proven in production yet.* You decide if the risk is worth it. It could also break debug tools that mess with malloc, like Guard Malloc or the Address Sanitizer.
 
+##### Update: jemalloc is being used in production, with performance benefits, in a large-scale iOS app: https://github.com/jemalloc/jemalloc/issues/1322
+
 #### The less evil, but less effective, CFAllocator way
 
 CFAllocator is a struct to represent an allocator, e.g. it has function pointers for malloc and free implementations. It is used by Apple for lots of things, e.g. for allocating the buffer that an NSString or NSArray uses. You can set the default one for Apple to use by creating your own CFAllocator and calling CFAllocatorSetDefault with it. Ideally, you should do this early in the app lifecycle to catch more allocations. Although it doesn’t cover all the cases that the previous way does, it is at least officially supported by Apple and thus safer. You can build jemalloc with the repo linked above, and add the --no-replace flag so that it will let you do the replacing yourself.
