@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Cutting the Size of .strings Files in Half"
+title:  "How to Cut the Size of .strings Files in Half"
 date:   2021-03-25 21:45:46 -0400
 categories: jekyll update
 ---
