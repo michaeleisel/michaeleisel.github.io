@@ -17,22 +17,22 @@ It reduces the size of localization strings, both compressed and uncompressed, b
 
 Suppose an app has Localization.strings files for English and Spanish, each with the same two key-value pairs. Here's the English one:
 ```
-"key1" = "some thing";
-"key2" = "other thing";
+"SomeLongKey1" = "some thing";
+"SomeLongKey2" = "other thing";
 ```
 
 and the Spanish one:
 
 ```
-"key1" = "alguna cosa";
-"key2" = "otra cosa";
+"SomeLongKey1" = "alguna cosa";
+"SomeLongKey2" = "otra cosa";
 ```
 
-There's some repetition here: `key1` and `key2` have to be included for each language. However, they could just be stored once, in a separate file. Then, each localization file only needs to store its values and not its keys, _as long as the order of each language's values matches the keys_. So here, it could repackaged in JSON as:
+There's some repetition here: `SomeLongKey1` and `SomeLongKey2` have to be included for each language. However, they could just be stored once, in a separate file. Then, each localization file only needs to store its values and not its keys, _as long as the order of each language's values matches the keys_. So here, it could repackaged in JSON as:
 
 keys.json
 ```
-["key1", "key2"]
+["SomeLongKey1", "SomeLongKey2"]
 ```
 
 english.json
@@ -52,6 +52,19 @@ Now the key-value pairs for any language can be reconstructed by zipping the glo
 This new structure doesn't work with Apple's existing `NSLocalizedString`/`localizedString(forKey key:, value:, table tableName:)` setup. Instead, it needs a new version of these functions. On the plus side, by creating a new pipeline, it makes further customizations easier in the future. Make sure Apple knows which localizations are supported, so it can display it in the App Store, by setting the [CFBundleLocalizations](https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundlelocalizations) key. Also, InfoPlist.strings must be left alone, as Apple expects it to be as it is.
 
 Here's a [git repo](https://github.com/michaeleisel/MiniStrings) with an example of this pipeline.
+
+## Alternative: Using Maps with Compressed Keys
+
+After recently poking around Instagram's app, I saw they have an interesting alternative: they use the original map format of .strings files, but in JSON and with compressed keys. E.g.:
+
+```
+"1044mf": "some thing",
+"105a9V": "other thing"
+```
+
+Then they can either rewrite the keys in the source code, meaning they don't need a custom pipeline, or else have a separate map from long key to short key that the pipeline uses.
+
+Benefits: Although this will result in a slightly larger app size, especially uncompressed, it has some wins. It eliminates the need for placeholder elements and it allows you to have a custom order for each file, theoretically resulting in a better compressed size if you can find a clever enough way to order it.
 
 ## Pluralization and .stringsdict
 
