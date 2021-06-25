@@ -1,21 +1,21 @@
 ---
 layout: post
-title:  "Reducing the App Size Cost of Localization Strings"
+title:  "Cutting the Size of .strings Files in Half"
 date:   2021-03-25 21:45:46 -0400
 categories: jekyll update
 ---
 
 ## Introduction
 
-The app download size is important to keep small to have a fast onboarding experience for the user, and to reduce the size of the app on disk. By using this trick for an app with a lot of localized strings, it can be reduced by a decent amount.
+It's important to minimize the app's size, both to reduce its download time as well as reduce the space it takes up on disk. This trick helps with that specifically for .strings files.
 
 ## Expected Gain
 
-This trick will reduce the size of localization strings, both compressed and uncompressed, by roughly 50%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. Typically, it's good for very large apps, where the strings can take up several megabytes.
+It reduces the size of localization strings, both compressed and uncompressed, by roughly 50%. The longer the keys are, and the more languages that have localization strings, the more it will reduce it. Typically, it's best for very large apps, where the strings can take up several megabytes.
 
 ## Explanation
 
-Suppose an app has Localization.strings files for English and Spanish, each with values for keys `key1` and `key2`. Here's the English one:
+Suppose an app has Localization.strings files for English and Spanish, each with the same two key-value pairs. Here's the English one:
 ```
 "key1" = "some thing";
 "key2" = "other thing";
@@ -28,7 +28,7 @@ and the Spanish one:
 "key2" = "otra cosa";
 ```
 
-There's some repetition here: `key1` and `key2` have to be included for each language. However, they could just be stored once, in a separate file. Then, each localization file only needs to store its values, _as long as the order of each language's values matches the keys_. So here, it could repackaged in JSON as:
+There's some repetition here: `key1` and `key2` have to be included for each language. However, they could just be stored once, in a separate file. Then, each localization file only needs to store its values and not its keys, _as long as the order of each language's values matches the keys_. So here, it could repackaged in JSON as:
 
 keys.json
 ```
@@ -49,7 +49,7 @@ Now the key-value pairs for any language can be reconstructed by zipping the glo
 
 ## A New Strings Pipeline
 
-This new structure, unfortunately, doesn't work with Apple's existing `NSLocalizedString`/`localizedString(forKey key:, value:, table tableName:)` setup. Instead, it needs a new version of these functions. On the plus side, by creating a new pipeline, it makes further customizations easier in the future. Make sure Apple knows which localizations are supported, so it can display it in the App Store, by setting the [CFBundleLocalizations](https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundlelocalizations) key. Also, InfoPlist.strings must be left alone, as Apple expects it to be as it is.
+This new structure doesn't work with Apple's existing `NSLocalizedString`/`localizedString(forKey key:, value:, table tableName:)` setup. Instead, it needs a new version of these functions. On the plus side, by creating a new pipeline, it makes further customizations easier in the future. Make sure Apple knows which localizations are supported, so it can display it in the App Store, by setting the [CFBundleLocalizations](https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundlelocalizations) key. Also, InfoPlist.strings must be left alone, as Apple expects it to be as it is.
 
 Here's a [git repo](https://github.com/michaeleisel/MiniStrings) with an example of this pipeline.
 
