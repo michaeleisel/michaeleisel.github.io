@@ -35,7 +35,7 @@ static CFTimeInterval sTimeToInitializer = 0;
 
 // With iOS 15 pre-warming, initializers and other pre-main steps are run preemptively, potentially hours before the
 // app is started and main() is run. So, take the difference between process start time in pre-main initializer
-// (which we control with this "constructor" attribute) and add that later with main.
+// (which we control with this "constructor" attribute) and add that later with post-main time.
 // NOTE: any initializers run after this will not have their startup time impact included. We try to make this
 // initializer go first using a priority of "0", but there are no guarantees.
 __used __attribute__((constructor(0))) static void recordProcessStartTime() {
