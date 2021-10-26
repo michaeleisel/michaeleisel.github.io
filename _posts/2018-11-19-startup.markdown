@@ -34,8 +34,10 @@ static CFTimeInterval processStartTime() {
 static CFTimeInterval sTimeToInitializer = 0;
 
 // With iOS 15 pre-warming, initializers and other pre-main steps are run preemptively, potentially hours before the
-// app is started and main() is run. So, take the difference between process start time and 
-// 
+// app is started and main() is run. So, take the difference between process start time in pre-main initializer
+// (which we control with this "constructor" attribute) and add that later with main.
+// NOTE: any initializers run after this will not have their startup time impact included. We try to make this
+// initializer go first using a priority of "0", but there are no guarantees.
 __used __attribute__((constructor(0))) static void recordProcessStartTime() {
     sTimeToInitializer = [NSDate date].timeIntervalSince1970 - processStartTime();
 }
@@ -43,6 +45,7 @@ __used __attribute__((constructor(0))) static void recordProcessStartTime() {
 static CFTimeInterval sMainStartTime;
 
 int main(int argc, char * argv[], char **envp) {
+    // We're now in main, so pre-warming is done, begin recording time again. Any time before this line in main will not be included.
     sMainStartTime = CACurrentMediaTime();
     // ...
 }
@@ -53,11 +56,7 @@ CFTimeInterval timeFromStartToNow() {
 }
 {% endhighlight %}
 
-#### Caveat 1: iOS 15+ pre-warming
-
-It appears that Apple has begun launching third-party apps preemptively to do all the pre-main setup, including running initializers. This means that `main()` for an app may not be called for hours after its process start time is recorded, giving giant and incorrect startup times. One solution is to have an initializer that records the difference between the current time at that point and the process start time. Since this initializer will be run during warmup, the time spent warm without launching won't affect the time that it records. Then, immediately when `main()` is called, record another time. Then, when you're app is started up, add the difference from the initializer + current time - time that `main()` starts. The one downside is that it won't record the time that initializers take after the one that recorded the time, and I'm not aware of a surefire way to control initializer order (although `__attribute__
-
-#### Caveat 2: absolute timing
+#### Caveat: absolute timing
 
 The process start time that we get from `processStartTime` is given in seconds since 1970. Unfortunately, this is not so great for timing because it can be changed, e.g. if the phone synchronizes its time with a server in between when the process starts and when we run `[NSDate date].timeIntervalSince1970` in `main()`. This would be a very rare case, but it should be kept in mind (you may want to remove negative and ridiculously large values from your results).
 
