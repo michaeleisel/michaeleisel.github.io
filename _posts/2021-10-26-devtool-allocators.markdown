@@ -15,9 +15,18 @@ In a [previous post](https://eisel.me/allocator), I looked at what allocators ar
 
 Fortunately, using a different allocator for a tool doesn't require it to be rebuilt. Instead, for allocators that are designed to swap themselves in, one can just add the environment variable `DYLD_INSERT_LIBRARIES=/path/to/allocator.dylib`. One example is jemalloc, which can be built by downloading the repo, running `cd jemalloc && ./autogen.sh && make`, and using the resulting `lib/libjemalloc.dylib`.
 
+#### Note: if a process is hardened to strip DYLD_\* environment variables or prevent libraries from being sideloaded, this technique won't work.
+
 ## Example: Compilers
 
-Objective-C, C++, and Swift compilation can both be sped up by swapping out the allocator. The impact for Objective-C in debug builds can be smaller, but for Swift and C++, and for builds with optimizations, it can reduce time taken by 10% or more. We can change the allocator for swift, for example, by creating a small shell script that sets the environment variable and then invokes swiftc with its arguments. Then, set the Xcode build variable `SWIFT_EXEC = /path/to/my_swiftc.sh`, and it will have the swift compiler use this alternate allocator. Similarly, clang can be set with `CC = /path/to/my_cc.sh`.
+Objective-C, C++, and Swift compilation can both be sped up by swapping out the allocator. The impact for Objective-C in debug builds can be smaller, but for Swift and C++, and for builds with optimizations, it can reduce time taken by 10% or more. We can change the allocator for swift, for example, by creating a small shell script:
+```
+export DYLD_INSERT_LIBRARIES=/path/to/libalternate_malloc.dylib
+# Just calling /usr/bin/swiftc doesn't seem to work (maybe swiftc is hardened?), so instead call the actual swiftc binary in the toolchain
+exec `xcode-select -p`/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc "$@"
+```
+
+Then, set the Xcode build variable `SWIFT_EXEC = /path/to/my_swiftc.sh`, and it will have the swift compiler use this alternate allocator. Similarly, clang can be set with `CC = /path/to/my_clang.sh`.
 
 ## Example: llvm-profdata
 
