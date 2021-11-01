@@ -11,6 +11,10 @@ When trying to speed up a dev tool, like the swift compiler or the linker, devel
 
 In a [previous post](https://eisel.me/allocator), I looked at what allocators are and how the default one for iOS (and really macOS) can be replaced at runtime. In this post, we'll look at the practical applications of alternate allocators for speeding up dev tools. For many dev tools, this trick can bring at least a modest speedup.
 
+## Is using a custom allocator safe?
+
+Allocators are low-level, complicated things, and if they break, very bad things can happen. On the other hand, jemalloc, for example, has been in use for decades, including as the default allocator for FreeBSD. It has also been used with success both for really big iOS apps as well as Mac CI pipelines for big companies.
+
 ## How to do it
 
 Fortunately, using a different allocator for a tool doesn't require it to be rebuilt. Instead, for allocators that are designed to swap themselves in, one can just add the environment variable `DYLD_INSERT_LIBRARIES=/path/to/allocator.dylib`. One example is jemalloc, which can be built by downloading the [jemalloc repo](https://github.com/jemalloc/jemalloc), running `cd jemalloc && ./autogen.sh && make`, and using the resulting `lib/libjemalloc.dylib`.
@@ -32,7 +36,7 @@ Then, set the Xcode build variable `SWIFT_EXEC = /path/to/my_swiftc.sh`, and it 
 
 llvm-profdata is a tool that takes the code coverage results from different test runs and merges them together to get the overall code coverage for a test suite. At one company, this step was adding 40 seconds to CI time, but with jemalloc it was cut in half to 20 seconds.
 
-## Estimating the Potential Performance Gain
+## Estimating the potential performance gain
 
 One easy way to know if a tool could be sped up through a different allocator, aside from just timing it with/without a different one, is to profile that tool with the Time Profiler. Although it may surprise some, ordinary mac executables can be profiled in Instruments, even if they weren't built by the developer themself. The executable can either be selected in Time Profiler and have its flags specified, or else a trace of all processes can be run while the executable is running. If a lot of time seems to be taken up by `malloc` and `free`, then there's more potential gain by using a different allocator. Although the performance impact of allocation is a complicated beast, this is a good litmus test to decide if it's worth trying.
 
