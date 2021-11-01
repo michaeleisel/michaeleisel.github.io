@@ -9,20 +9,20 @@ categories: jekyll update
 
 When trying to speed up a dev tool, like the swift compiler or the linker, developers may try a few things. For example, they may look through the man page for flags to speed them up (like `-j8` to parallelize `make` tasks). Or, they may improvise some caching system on top of the tool to eliminate unnecessary work. But there's another trick one can try: alternate allocators.
 
-In a [previous post](https://eisel.me/allocator), I looked at what allocators are and how the default one for iOS (and really macOS) can be replaced at runtime. In this post, we'll look at the practical applications of alternate allocators for speeding up dev tools. For many dev tools, allocating/deallocating takes up a substantial portion of the overall time. By using faster alternate allocators, one can substantially increase their speed.
+In a [previous post](https://eisel.me/allocator), I looked at what allocators are and how the default one for iOS (and really macOS) can be replaced at runtime. In this post, we'll look at the practical applications of alternate allocators for speeding up dev tools. For many dev tools, this trick can bring at least a modest speedup.
 
 ## How to do it
 
-Fortunately, using a different allocator for a tool doesn't require it to be rebuilt. Instead, for allocators that are designed to swap themselves in, one can just add the environment variable `DYLD_INSERT_LIBRARIES=/path/to/allocator.dylib`. One example is jemalloc, which can be built by downloading the repo, running `cd jemalloc && ./autogen.sh && make`, and using the resulting `lib/libjemalloc.dylib`.
+Fortunately, using a different allocator for a tool doesn't require it to be rebuilt. Instead, for allocators that are designed to swap themselves in, one can just add the environment variable `DYLD_INSERT_LIBRARIES=/path/to/allocator.dylib`. One example is jemalloc, which can be built by downloading the [jemalloc repo](https://github.com/jemalloc/jemalloc), running `cd jemalloc && ./autogen.sh && make`, and using the resulting `lib/libjemalloc.dylib`.
 
-#### Note: if a process is hardened to strip DYLD_\* environment variables or prevent libraries from being sideloaded, this technique won't work.
+__Note: for tools that are hardened to strip `DYLD_` environment variables or prevent libraries from being sideloaded, this technique won't work.__
 
 ## Example: Compilers
 
-Objective-C, C++, and Swift compilation can both be sped up by swapping out the allocator. The impact for Objective-C in debug builds can be smaller, but for Swift and C++, and for builds with optimizations, it can reduce time taken by 10% or more. We can change the allocator for swift, for example, by creating a small shell script:
+Objective-C, C++, and Swift compilation can be sped up by swapping out the allocator. The impact for Objective-C in debug builds can be smaller, but for Swift and C++, especially for builds with optimizations, it can reduce time taken by 10% or more. We can change the allocator for swift, for example, by creating a small shell script:
 ```
 export DYLD_INSERT_LIBRARIES=/path/to/libalternate_malloc.dylib
-# Just calling /usr/bin/swiftc doesn't seem to work (maybe swiftc is hardened?), so instead call the actual swiftc binary in the toolchain
+# Just calling /usr/bin/swiftc doesn't seem to work (maybe /usr/bin/swiftc is hardened?), so instead call the actual swiftc binary in the toolchain
 exec `xcode-select -p`/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc "$@"
 ```
 
@@ -34,7 +34,7 @@ llvm-profdata is a tool that takes the code coverage results from different test
 
 ## Estimating the Potential Performance Gain
 
-One easy way to know if a tool could be sped up through a different allocator, aside from just timing it with/without a different one, is to profile that tool with the Time Profiler. Although it may surprise some, ordinary mac executables can be profiled in Instruments, even if they weren't built by the developer themself. If a lot of time seems to be taken up by `malloc` and `free`, then there's more potential gain by using a different allocator. Although the performance impact of allocation is a complicated beast, this is a good litmus test to decide if it's worth trying.
+One easy way to know if a tool could be sped up through a different allocator, aside from just timing it with/without a different one, is to profile that tool with the Time Profiler. Although it may surprise some, ordinary mac executables can be profiled in Instruments, even if they weren't built by the developer themself. The executable can either be selected in Time Profiler and have its flags specified, or else a trace of all processes can be run while the executable is running. If a lot of time seems to be taken up by `malloc` and `free`, then there's more potential gain by using a different allocator. Although the performance impact of allocation is a complicated beast, this is a good litmus test to decide if it's worth trying.
 
 ## Which Alternate Allocator To Use?
 
