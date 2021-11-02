@@ -4,6 +4,8 @@
   <div class="wrapper">
 
     <div class="footer-col-wrapper">
+        {%- if page.path == "index.markdown" -%}
+        {%- else -%}
       <script src="https://giscus.app/client.js"
               data-repo="michaeleisel/michaeleisel.github.io"
               data-repo-id="MDEwOlJlcG9zaXRvcnkyODU0NDMxMjQ="
@@ -17,6 +19,7 @@
               crossorigin="anonymous"
               async>
       </script>
+        {%- endif -%}
       <br/>
       <h2 class="footer-heading">{{ site.title | escape }}</h2>
 
