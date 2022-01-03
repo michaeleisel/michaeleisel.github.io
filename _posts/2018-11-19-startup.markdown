@@ -7,7 +7,7 @@ categories: jekyll update
 
 ## Introduction
 
-Before an app even runs `main` and `+applicationDidFinishLaunching`, a considerable amount of work is done, including setting up dylibs for use, running `+load` methods, and more. This can take 500ms or more. Blog posts like [this one](https://techblog.izotope.com/2018/03/08/improving-your-ios-apps-launch-time/) show you how to measure it with the debugger, using `DYLD_PRINT_STATISTICS`, but it’s hard to find any help for measurement in the wild.
+Before an app even runs `main` and `+applicationDidFinishLaunching`, a considerable amount of work is done, including setting up dylibs for use, running `+load` methods, and more. This can take 500ms or more. Blog posts like [this one](https://techblog.izotope.com/2018/03/08/improving-your-ios-apps-launch-time/) show you how to measure it with the debugger, using `DYLD_PRINT_STATISTICS`, but it’s hard to find any help for measurement in the wild. Note the special handling for iOS 15's pre-warming feature.
 
 ## How To Do It
 
@@ -47,6 +47,11 @@ static CFTimeInterval sMainStartTime;
 int main(int argc, char * argv[], char **envp) {
     // We're now in main, so pre-warming is done, begin recording time again. Any time before this line in main will not be included.
     sMainStartTime = CACurrentMediaTime();
+
+    if ([[NSProcessInfo processInfo].environment[@"ActivePrewarm"] isEqual:@"1"]) {
+        // The ActivePrewarm variable indicates whether the app was launched via pre-warming.
+        // Based on this, for example, you can choose whether or not to include the pre-main time in your calculation based on that.
+    }
     // ...
 }
 
