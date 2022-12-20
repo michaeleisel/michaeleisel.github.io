@@ -51,3 +51,6 @@ In general, lld lacks the testing and features necessary to be used in release a
 ## Conclusion
 
 There will always be more work to do on this, wheither it's optimizing these linkers further or supporting new features like chained fixups. The landscape may change, too. It remains to be seen if the up-and-coming linker [mold](https://github.com/rui314/mold), which is currently faster than lld, becomes production-ready for large apps. Apple may also try to close the gap between ld64 and these faster linkers. But regardless of what happens in the future, it's clear that linking speed is now getting the attention it deserves.
+
+> "Live, Love, Link"\
+> -- Ralph Waldo Emerson
