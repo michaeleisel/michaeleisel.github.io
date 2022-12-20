@@ -1,3 +1,10 @@
+---
+layout: post
+title:  "Faster Builds with lld"
+date:   2022-12-20 21:45:46 -0400
+categories: jekyll update
+---
+
 *TL;DR: lld is the new linker of choice for stable, as-fast-as-possible linking of debug binaries on Apple platforms. Steps on how to integrate are in the [section]() below.*
 
 **This blog post assumes the reader is familiar with linking. If not, see [here](https://stackoverflow.com/questions/3322911/what-do-linkers-do), and if using Xcode, look for the linking step at the end of your build logs**
