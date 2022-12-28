@@ -5,7 +5,7 @@ date:   2022-12-19 21:45:46 -0400
 categories: jekyll update
 ---
 
-**TL;DR: lld is a great choice for faster linking of debug binaries on Apple platforms. Steps on how to integrate are in the [section](#integrating-lld) below.**
+**TL;DR: lld on the Mac can link binaries in 50-80% the time of ld64. It has come a long way and is now used by many large companies. Steps on how to integrate are in the [section](#integrating-lld) below.**
 
 ## Introduction
 
