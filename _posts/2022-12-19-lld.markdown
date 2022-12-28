@@ -37,20 +37,19 @@ zld is in maintenance mode! With lld becoming a superior alternative, and with a
 
 ## Integrating lld
 
-The [directions](https://lld.llvm.org/MachO/index.html) in the LLVM documention explain how to properly integrate it (don't miss the note to add `-Wl,--deduplicate-literals` if you want to be on the safe side to avoid issues when integrating). Note that the current official LLVM release also lacks a key feature to work properly with Swift/Objective-C projects built with Xcode 14.0 or later. To make sure that feature is included, one should download the latest release [here](https://github.com/keith/ld64.lld/releases).
+The [directions](https://lld.llvm.org/MachO/index.html) in the LLVM documention explain how to properly integrate it. Note that the current official LLVM release lacks a couple key bug fixes, especially for those doing iOS builds and/or building with Xcode 14. To get a version with those fixes, download the latest one from [here](https://github.com/keith/ld64.lld/releases).
 
 ## Should lld be used for release builds?
 
-In my opinion, the answer is no, at least not right now. This is for a few reasons:
-- Small differences in how lld and ld64 produce binaries can lead to app store rejectsions. For example, Apple examines metadata in the binary that indicates if ld64 was used to link the app, and if that metadata is wrong, Apple can reject the build as coming from this non-Xcode toolchain. lld is forced to imitate this metadata to essentially trick Apple into thinking that ld64 was used.
+In my opinion, the answer is no, at least not right now. This is for a couple reasons:
 - lld lacks certain features that ld64 has. For example, ld64's chained fixups, a feature that can improve startup time, is not yet well-tested for lld. In other words, by switching to lld, one's startup time could get worse.
 - ld64 is released in lockstep for each Xcode version with the other parts of the toolchain, such as clang and libLLVM. One's copy of lld may rely on a different version of LLVM, and this could theoretically cause problems. For example, there may be issues when LTO code produced by clang is given to a mismatched version of lld.
 
-In general, lld lacks the testing and features necessary to be used in release at scale. Personally, I'm not sure this is a bad thing. Release builds don't need the same extreme speed of linking that debug builds do, and they have a greater requirement for being stable and standardized across apps. However, lld could theoretically get new optimizations that ld64 lacks that make it a worthwhile choice. It already can produce smaller binaries due to Identical Code Folding, so we'll see what happens.
+In general, lld lacks the testing and features for me to recommend it at scale. Personally, I'm not sure this is a bad thing. Release builds don't need the same extreme speed of linking that debug builds do, and they have a greater requirement for being stable and standardized across apps. However, Google does use it for production builds, and lld could theoretically get new optimizations that ld64 lacks. It already can produce smaller binaries due to Identical Code Folding, so we'll see what happens.
 
 ## Conclusion
 
-There will always be more work to do on this, wheither it's optimizing these linkers further or supporting new features like chained fixups. The landscape may change, too. It remains to be seen if the up-and-coming linker [mold](https://github.com/rui314/mold), which is currently faster than lld, becomes production-ready for large apps. Apple may also try to close the gap between ld64 and these faster linkers. But regardless of what happens in the future, it's clear that linking speed is now getting the attention it deserves.
+There will always be more work to do on this, wheither it's optimizing these linkers further or supporting new features like chained fixups. The landscape may change, too. It remains to be seen if the up-and-coming paid linker [sold](https://github.com/bluewhalesystems/sold), which is currently faster than lld, becomes production-ready for large apps. Apple may also try to close the gap between ld64 and these faster linkers. But regardless of what happens in the future, it's clear that linking speed is now getting the attention it deserves.
 
 > "Live, Love, Link"\
-> -- Ralph Waldo Emerson
+> -- Martha Stewart
