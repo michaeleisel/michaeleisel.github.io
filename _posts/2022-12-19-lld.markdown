@@ -51,5 +51,7 @@ In general, lld lacks the testing and features for me to recommend it at scale. 
 
 There will always be more work to do on this, whether it's optimizing these linkers further or supporting new features like chained fixups. The landscape may change, too. It remains to be seen if the up-and-coming paid linker [sold](https://github.com/bluewhalesystems/sold), which is currently faster than lld, becomes production-ready for large apps. Apple may also try to close the gap between ld64 and these faster linkers. But regardless of what happens in the future, it's clear that linking speed is now getting the attention it deserves.
 
+(Looking for more tips to speed up your build? Check out my [post](https://eisel.me/signing) on how to speed up code signing)
+
 > "Live, Love, Link"\
 > -- Martha Stewart
