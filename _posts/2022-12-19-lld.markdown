@@ -55,3 +55,5 @@ There will always be more work to do on this, whether it's optimizing these link
 
 > "Live, Love, Link"\
 > -- Martha Stewart
+
+*Special thanks to Keith Smiley and Andrew Emil for their feedback on this blog post.*
