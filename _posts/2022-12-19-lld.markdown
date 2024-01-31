@@ -5,6 +5,8 @@ date:   2022-12-19 21:45:46 -0400
 categories: jekyll update
 ---
 
+### Update: with the release of ld-prime, the new default linker, lld is no longer necessarily the fastest option
+
 **TL;DR: lld is a great choice for faster linking of iOS, macOS, etc. debug binaries. It takes 20-50% less time than ld64 and is now used by many large companies. Steps on how to integrate are in the [section](#integrating-lld) below. zld has been archived in favor of lld.**
 
 ## Introduction
