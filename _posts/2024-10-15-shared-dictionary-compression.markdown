@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Faster iOS Network Performance with Shared Dictionary Compression"
+title:  "Faster iOS Networking with Shared Dictionary Compression"
 date:   2024-10-15 21:45:46 -0400
 categories: jekyll update
 ---
