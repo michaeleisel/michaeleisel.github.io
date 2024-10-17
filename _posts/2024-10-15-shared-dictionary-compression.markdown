@@ -78,7 +78,7 @@ Since we've seen how difficult it is to measure it with theoretical analysis, a 
 
 ### Results from real companies
 
-It has been [shown](https://github.com/WICG/compression-dictionary-transport/blob/main/examples.md#static-resource-flow-results) that various network requests for popular websites would be substantially reduced in size by using shared dictionary compression. And size wins like that translate into real results: Amazon [reported](https://groups.google.com/a/chromium.org/g/blink-dev/c/nQl0ORHy7sw/m/LkXwXcUtAgAJ) a 10% reduction in page load times for browser loads in the US. On the mobile front, there's a top 10 App Store app that uses shared dictionary compression. The gains depend on the app, but there's a lot of potential for many apps.
+It has been [shown](https://github.com/WICG/compression-dictionary-transport/blob/main/examples.md#static-resource-flow-results) that various network requests for popular websites would be substantially reduced in size by using shared dictionary compression. And size wins like that translate into real results: Amazon [reported](https://groups.google.com/a/chromium.org/g/blink-dev/c/nQl0ORHy7sw/m/LkXwXcUtAgAJ) a 10% reduction for the 90th percentile for page load times the US. On the mobile front, there's a top 10 App Store app that uses shared dictionary compression. The gains depend on the app, but there's a lot of potential for many apps.
 
 ## A concrete scheme
 
