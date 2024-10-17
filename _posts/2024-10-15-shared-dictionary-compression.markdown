@@ -17,7 +17,7 @@ And while we're at it, consider [switching to HTTP/3](https://developer.apple.co
 
 ## What is shared dictionary compression?
 
-Shared dictionary compression is where an iOS app and the server it's communicating with each have a copy of some piece of data (the "dictionary") that can be used to make a request smaller. For instance, if the client and server have both stored the previous day's response for some public endpoint, and today's response for that endpoint has only changed slightly, then the server could just return a diff between the two responses, and tell the client to use the diff in conjunction with the previous day's response (the dictionary). Let's suppose the endpoint is called `/latest_news`, and it returned the following response yesterday:
+Shared dictionary compression is where an iOS app and the server it's communicating with each have a copy of some piece of data (the "dictionary") that can be used to make a request smaller. For instance, if the client and server have both stored the previous day's response for some public endpoint, and today's response for that endpoint has only changed slightly, then the server could just return a diff between the two responses. Let's suppose the endpoint is called `/latest_news`, and it returned the following response yesterday:
 
 ```
 {
